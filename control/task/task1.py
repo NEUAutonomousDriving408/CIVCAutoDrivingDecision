@@ -48,6 +48,48 @@ def lontitudeControlSpeed(speed, lonPid):
         lonPid.brake_ = ((speedPidThread_2 - (-1 * lonPid.output)) / speedPidThread_2) * 0.4
     # print(lonPid.thorro_, '    ', lonPid.brake_)
 
+def lontitudeControlSpeed(speed, lonPid):
+    lonPid.update(speed - 5.0)
+    if (lonPid.output > speedPidThread_1):  # 加速阶段
+
+        # print("==============================================")
+        # print('speed is:', speed, 'output is:', lonPid.output, 'stage 1')
+        # print("==============================================")
+        lonPid.thorro_ = 1
+        lonPid.brake_ = 0
+
+    elif (lonPid.output > speedPidThread_2):  # 稳定控速阶段
+
+        # print("==============================================")
+        # print('speed is:', speed, 'output is:', lonPid.output, 'stage 2')
+        # print("==============================================")
+
+        lonPid.thorro_ = min((lonPid.output / speedPidThread_1) * 0.85, 1.0)
+        lonPid.brake_ = min(((speedPidThread_1 - lonPid.output) / speedPidThread_1) * 0.1, 1.0)
+
+    elif (lonPid.output > 0):  # 下侧 微调
+
+        # print("==============================================")
+        # print('speed is:', speed, 'output is:', lonPid.output, 'stage 3')
+        # print("==============================================")
+        lonPid.thorro_ = (lonPid.output / speedPidThread_2) * 0.3
+        lonPid.brake_ = ((speedPidThread_2 - lonPid.output) / speedPidThread_2) * 0.2
+
+    elif (lonPid.output < -1 * speedPidThread_1):  # 减速阶段
+
+        # print("==============================================")
+        # print('speed is:', speed, 'output is:', lonPid.output, 'stage 4')
+        # print("==============================================")
+        lonPid.thorro_ = (-1 * lonPid.output / 5) * 0.1
+        lonPid.brake_ = 0.5
+
+    else:
+        # print("==============================================")
+        # print('speed is:', speed, 'output is:', lonPid.output, 'stage 5')
+        # print("==============================================")
+        lonPid.thorro_ = (-1 * lonPid.output / speedPidThread_2) * 0.2
+        lonPid.brake_ = ((speedPidThread_2 - (-1 * lonPid.output)) / speedPidThread_2) * 0.4
+    # print(lonPid.thorro_, '    ', lonPid.brake_)
 
 def getTTC(current_speed, current_acceleration, dist, safe_dist):
 
@@ -90,18 +132,16 @@ def run_task1_test(myCar, Controller):
     #print("dt:", -dt,"a:",a)
     ttc = getTTC(myCar.speed, a, myCar.dist, safe_dist=0.5)
 
-    # dist = 10, ttc = 4
-    # 30 --> 4, 20 --> 4 , 0 --> 2, avg = 20
 
-    # 30 --> 4, 20 --> 3 , 0 --> 3, avg = 18
-    #if myCar.dist < 10 and ttc < 4:
 
     DANGER = False
 
     if myCar.dist < 1:
+
         DANGER = True
 
     if myCar.dist < 15 and a > 5.5:
+
         DANGER = True
 
     if ttc > 0.5 and not DANGER and ttc != 999:
@@ -116,12 +156,15 @@ def run_task1_test(myCar, Controller):
 
         # 如果加速度过小，那么刹车再软一点点 4
 
-        if a > 4:
-            ADCPlatform.control(0, Controller.latPid.steer_,
-                            0.6, 1)
-        else:
-            ADCPlatform.control(0, Controller.latPid.steer_,
-                            0.6, 1)
+        # 也许好稍微加大一下这个比例
+        # (0.9+0.1)    0.15时候对应的距离为： 0.44-0.83
+        # (0.9+0.1)   0.155时候对应的距离为： 0.45-0.58-0.74-0.75-0.76-0.79-0.80-0.85-0.89-0.93
+        # (0.8+0.1+0.1)0.16时候对应的距离为： 0.75-0.79-0.85-0.90-1.12
+        brake_ = 0.155 * a
+
+        ADCPlatform.control(0, Controller.latPid.steer_,
+                            brake_, 1)
+
 
 
     elif DANGER:

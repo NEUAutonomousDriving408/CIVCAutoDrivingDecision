@@ -8,16 +8,12 @@ class CarState(object):
         self.midlane = -1  # 7 0 -7 latpid 参考 target
 
         self.positionnow = 0  # 两车道线A1求和
-        self.changing = False  # 处于超车状态时为True
 
         self.saftydistance = 25  # 与前车的安全距离
-
         self.delta_v = 0
-
         self.acc = 0
+        self.dist = 10 # 与前车的实际距离
 
-        self.dist = 0 # 与前车的实际距离
-        self.direction = 'mid'
         self.yr = 0  # 车辆当前姿态
 
 
@@ -29,9 +25,9 @@ class ControlData(object):
         self.lat_kd = 6.2
 
                 '''
-        self.lat_kp = 1.1
-        self.lat_ki = 0.14
-        self.lat_kd = 6.2
+        self.lat_kp = 1.35
+        self.lat_ki = 0.06
+        self.lat_kd = 10.2
 
         self.latPid = pid.PID(self.lat_kp, self.lat_ki, self.lat_kd)
 

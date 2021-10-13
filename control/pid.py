@@ -24,7 +24,7 @@ class PID:
         self.PTerm = 0.0
         self.ITerm = 0.0
         self.DTerm = 0.0
-        self.last_error = 0.0
+        self.last_error = 0.0   # 上次的误差
 
         # Windup Guard
         self.int_error = 0.0
@@ -49,7 +49,7 @@ class PID:
 
         self.current_time = time.time()
         delta_time = self.current_time - self.last_time
-        delta_error = error - self.last_error
+        delta_error = error - self.last_error   #
 
         if (delta_time >= self.sample_time):
             self.PTerm = self.Kp * error

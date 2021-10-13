@@ -2,7 +2,7 @@ import ADCPlatform
 from control import pid
 from control.state import CarState, ControlData
 
-def run(task):
+def run(task, final_task=False):
     running = True
     # 毫米波真值传感器id
     radarId = 0
@@ -27,6 +27,26 @@ def run(task):
     controller = ControlData()
     myCar = CarState()
 
+    # 给一个相反的角度控制，让PID的震荡更少
+    # 初始油门不能给太大，不然会收不回来
+
+    test_flag = True
+    if task == 2:
+        if not final_task:
+            # 0.4 可选
+            ADCPlatform.control(1, 20, 0, 1)
+        elif final_task and not test_flag:
+
+            ADCPlatform.control(1, 40, 0, 1)
+
+        elif final_task and test_flag:
+            ADCPlatform.control(0, 30, 1, 1)
+            ADCPlatform.control(0, 30, 1, 1)
+            ADCPlatform.control(0, 30, 1, 1)
+            ADCPlatform.control(0, 30, 1, 1)
+            ADCPlatform.control(0, 30, 1, 1)
+
+            ADCPlatform.control(1, 30, 0, 1)
 
     while running:
 
@@ -52,38 +72,48 @@ def run(task):
         # 当前角速度
         yr = control_data_package.json['YR']
 
-        # print("yaw:",yaw)
 
         if radar_data_package is not None:
 
             # v: cm/s
             # 相对前车的速度
-            delta_spd = radar_data_package.json[0]["Speed"] / 100
+            delta_spd = radar_data_package.json[0]["Speed"] / 100  # m/s
 
             # 相对前车的距离
-            dist = radar_data_package.json[0]["Range"] / 100
+            dist = radar_data_package.json[0]["Range"] / 100  # m
+
+            myCar.dist = dist
+
+            myCar.delta_v = delta_spd
 
         if line_data_package is not None:
 
-            myCar.positionnow = -7.0 + (line_data_package.json[2]['A1'] + line_data_package.json[1]['A1'])
+            if len(line_data_package.json) == 4:
+                myCar.positionnow = -6.5 + (line_data_package.json[2]['A1'] + line_data_package.json[1]['A1'])
+            else:
+                print("ERROR")
+                myCar.positionnow = -7.0
+
 
         # 保存当前的状态
 
         myCar.speed = spd
-        myCar.cao = yr
-        myCar.dist = dist
-        myCar.delta_v = delta_spd
+        myCar.cao = yaw
+        myCar.yr = yr
 
-        if task == 0:
+        # 如果是决赛题，默认是False
+        if final_task:
 
-            from control.task.task0 import run_task0
-            run_task0(myCar, controller)
+            if task == 0:
 
-        elif task == 1:
-            x = []
+                from control.final_task.task0 import run_task0_test
+                run_task0_test(myCar, controller)
 
-        elif task == 2:
+            elif task == 1:
 
+                from control.final_task.task1 import run_task1_test
+                run_task1_test(myCar, controller)
 
-            from control.task.task2 import run_task2
-            run_task2(myCar, controller)
+            elif task == 2:
+                from control.final_task.task2 import run_task2_test
+                run_task2_test(myCar, controller, use_w=False)

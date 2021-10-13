@@ -61,58 +61,15 @@ def getTTC(current_speed, current_acceleration, dist, safe_dist):
 
     return ttc
 
-def run_task0(myCar, Controller):
 
-    ## 如果想使用ttc模型的话，必须先测得到他的加速度
+'''
+def run_task1(myCar, Controller):
 
-    Controller.speedPid.setSetpoint(30)
-
-    # 纵向控制 thorro_ and brake_
-    lontitudeControlSpeed(myCar.speed, Controller.speedPid)
-
-    # 横向不需要控制
-
-    Controller.latPid.steer_ = 0
-
-    # print("spd:", myCar.speed)
-    # print("position:", myCar.positionnow)
-
-    dt = np.round(myCar.dist/ myCar.delta_v,3)
-
-    a = np.round(myCar.delta_v/dt,3)
-    print("dt:", -dt,"a:",a)
-
-    print("ttc:",getTTC(myCar.speed, a, myCar.dist, safe_dist=0.5))
+    return None
+'''
 
 
-    if myCar.dist < 15:
-
-        lontitudeControlSpeed(10, Controller.latPid)
-
-
-
-        if myCar.speed != 0:
-            ttc = myCar.dist / myCar.speed
-        else:
-            ttc = 999
-
-        if myCar.dist < 2:
-            #print("还有{}".format(np.round(myCar.dist, 3)), "米就到了！")
-            ADCPlatform.control(0, Controller.latPid.steer_,
-                                1, 0)
-
-        if ttc < 3:
-            #print("还有{}".format(np.round(ttc, 3)), "秒就到了！")
-            ADCPlatform.control(0, Controller.latPid.steer_,
-                                0.6, 0)
-        else:
-            ADCPlatform.control(Controller.speedPid.thorro_, Controller.latPid.steer_,
-                                0.2, 1)
-    else:
-        ADCPlatform.control(Controller.speedPid.thorro_, Controller.latPid.steer_,
-                            0, 1)
-
-def run_task0_test(myCar, Controller):
+def run_task1_test(myCar, Controller):
 
     ## 如果想使用ttc模型的话，必须先测得到他的加速度
 
@@ -135,20 +92,18 @@ def run_task0_test(myCar, Controller):
 
     a = np.round(myCar.delta_v/dt,3)
     #print("dt:", -dt,"a:",a)
-    ttc = getTTC(myCar.speed, a, myCar.dist, safe_dist=0.5)
+    ttc = getTTC(myCar.speed, a, myCar.dist, safe_dist=0.63)
 
-    # dist = 10, ttc = 4
-    # 30 --> 4, 20 --> 4 , 0 --> 2, avg = 20
 
-    # 30 --> 4, 20 --> 3 , 0 --> 3, avg = 18
-    #if myCar.dist < 10 and ttc < 4:
 
     DANGER = False
 
     if myCar.dist < 1:
+
         DANGER = True
 
     if myCar.dist < 15 and a > 5.5:
+
         DANGER = True
 
     if ttc > 0.5 and not DANGER and ttc != 999:
@@ -157,23 +112,22 @@ def run_task0_test(myCar, Controller):
         ADCPlatform.control(Controller.speedPid.thorro_, Controller.latPid.steer_,
                             0, 1)
 
-    elif ttc <= 0.5 and not DANGER:
+    elif ttc <= 0.28 and not DANGER:
         # 如果ttc时间在一定范围了，软刹车
         print("dist:",myCar.dist,"ttc:",ttc,"a:",a)
 
         # 如果加速度过小，那么刹车再软一点点 4
-        '''
-        if a > 4:
-            ADCPlatform.control(0, Controller.latPid.steer_,
-                            0.5, 1)
-        else:
-            ADCPlatform.control(0, Controller.latPid.steer_,
-                            0.5, 1)
-        '''
-        brake_ = 0.14 * a
+
+        # 也许好稍微加大一下这个比例
+        # (0.9+0.1)    0.15时候对应的距离为： 0.44-0.83
+        # (0.9+0.1)   0.155时候对应的距离为： 0.45-0.58-0.74-0.75-0.76-0.79-0.80-0.85-0.89-0.93
+        # (0.8+0.1+0.1)0.16时候对应的距离为： 0.75-0.79-0.85-0.90-1.12
+        brake_ = 0.155 * a
 
         ADCPlatform.control(0, Controller.latPid.steer_,
                             brake_, 1)
+
+
 
     elif DANGER:
         # 如果太近了，硬刹车

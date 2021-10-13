@@ -40,6 +40,7 @@ def lontitudeControlSpeed(speed, lonPid):
         lonPid.thorro_ = (-1 * lonPid.output / 5) * 0.1
         lonPid.brake_ = 0.5
 
+
     else:
         # print("==============================================")
         # print('speed is:', speed, 'output is:', lonPid.output, 'stage 5')
@@ -61,62 +62,21 @@ def getTTC(current_speed, current_acceleration, dist, safe_dist):
 
     return ttc
 
-def run_task0(myCar, Controller):
-
-    ## 如果想使用ttc模型的话，必须先测得到他的加速度
-
-    Controller.speedPid.setSetpoint(30)
-
-    # 纵向控制 thorro_ and brake_
-    lontitudeControlSpeed(myCar.speed, Controller.speedPid)
-
-    # 横向不需要控制
-
-    Controller.latPid.steer_ = 0
-
-    # print("spd:", myCar.speed)
-    # print("position:", myCar.positionnow)
-
-    dt = np.round(myCar.dist/ myCar.delta_v,3)
-
-    a = np.round(myCar.delta_v/dt,3)
-    print("dt:", -dt,"a:",a)
-
-    print("ttc:",getTTC(myCar.speed, a, myCar.dist, safe_dist=0.5))
-
-
-    if myCar.dist < 15:
-
-        lontitudeControlSpeed(10, Controller.latPid)
-
-
-
-        if myCar.speed != 0:
-            ttc = myCar.dist / myCar.speed
-        else:
-            ttc = 999
-
-        if myCar.dist < 2:
-            #print("还有{}".format(np.round(myCar.dist, 3)), "米就到了！")
-            ADCPlatform.control(0, Controller.latPid.steer_,
-                                1, 0)
-
-        if ttc < 3:
-            #print("还有{}".format(np.round(ttc, 3)), "秒就到了！")
-            ADCPlatform.control(0, Controller.latPid.steer_,
-                                0.6, 0)
-        else:
-            ADCPlatform.control(Controller.speedPid.thorro_, Controller.latPid.steer_,
-                                0.2, 1)
-    else:
-        ADCPlatform.control(Controller.speedPid.thorro_, Controller.latPid.steer_,
-                            0, 1)
 
 def run_task0_test(myCar, Controller):
+    # First, we need to follow the front vehicle
+    # Second, we need to keep the speed and do not collide with this vehicle
+    # Third, after the front car brake, we need to brake and keep the safe distance between 0.5-1m
+
+    # For following the front car, we need to get the delta_speed provided by the lidar.
+    # And we need to judge the velocity and keep this value between a small range.
+    # Then we need to judge whether the front car is braking, so the AEB model need to be changeg
+    # The previous model assumes that the ego-vehicle drives slowly and the front vehicle has braked and
+    # this scenario can be seen as a silent car and braking model.
 
     ## 如果想使用ttc模型的话，必须先测得到他的加速度
 
-    Controller.speedPid.setSetpoint(30)
+    Controller.speedPid.setSetpoint(20)
 
     # 纵向控制 thorro_ and brake_
     lontitudeControlSpeed(myCar.speed, Controller.speedPid)
@@ -170,16 +130,12 @@ def run_task0_test(myCar, Controller):
             ADCPlatform.control(0, Controller.latPid.steer_,
                             0.5, 1)
         '''
-        brake_ = 0.14 * a
-
-        ADCPlatform.control(0, Controller.latPid.steer_,
-                            brake_, 1)
+       # brake_ = 0.13 * a
+        # 距离在1.0x左右，说明刹车力度太大，如果刹车时间够的话，那么减少刹车的力度。
+        brake_ = 0.128 * a
+        ADCPlatform.control(0, 0, brake_, 1)
 
     elif DANGER:
         # 如果太近了，硬刹车
         print("danger!")
         ADCPlatform.control(0, 0, 1, 1)
-
-
-
-
