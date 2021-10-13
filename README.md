@@ -12,9 +12,9 @@
   - 前方静止
   - 行人横穿马路
   - 曲线道路，前车障碍
-- 如果正确启动，应该出线如下字样：
 
-<img src="C:\Users\孙昊一\AppData\Roaming\Typora\typora-user-images\image-20210927140408955.png" alt="image-20210927140408955" style="zoom:50%;" />
+
+<img src="https://gitee.com/icvrc2021-neu/icvrcauto-driving-perception/raw/master/image/90score.png">
 
 ## 2 控制模块
 
